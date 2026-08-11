@@ -57,6 +57,11 @@ class Config:
     whisper_threads: int = 8
     autopaste: bool = True
     silence_duration: float = 1.5
+    # combo di iniezione della paste: nei terminali (Konsole/opencode/jcode/
+    # claude code) Ctrl+V è il literal-insert di readline e NON incolla; la
+    # paste da clipboard nei terminali è Ctrl+Shift+V. Nei programmi GUI
+    # resta ctrl+v. Valori: "ctrl+v" | "ctrl+shift+v".
+    paste_combo: str = "ctrl+v"
     silence_threshold: int = 3
     max_record_seconds: int = 120
     keep_audio: bool = False

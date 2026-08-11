@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `PASTE_COMBO` configuration key: the key sequence injected after a
+  successful transcription (default `ctrl+v`, shipped configs set
+  `ctrl+shift+v`)
+- `docs/OPERATIONS.md`: definitive operations runbook covering the ffmpeg ABI
+  break, VRAM exhaustion, terminal paste, and injector troubleshooting, with
+  a full incident log and gotcha list
+
+### Fixed
+
+- `_ydotool_key` now respects ydotool's real exit code, so the wtype/xdotool
+  fallbacks actually trigger when injection fails instead of being silently
+  skipped
+- Terminals no longer swallow pastes: `Ctrl+V` is readline literal-insert in
+  Konsole/opencode/jcode, so the paste combo defaults to `ctrl+shift+v` for
+  terminal setups
+
 ## [0.5.0] - 2026-07-28
 
 First tagged release. Local, offline voice dictation for Linux: hold a key,

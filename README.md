@@ -252,6 +252,7 @@ WHISPER_MODEL=                  # empty = auto-detect
 WHISPER_LANGUAGE=en             # en, it, … ("auto" to detect)
 WHISPER_THREADS=8
 AUTOPASTE=1                     # 0 = clipboard only, no injection
+PASTE_COMBO=ctrl+shift+v        # key combo sent to paste the text
 PTT_KEY=META+F12                # push-to-talk key
 NOTIFY_LEVEL=normal             # normal | quiet (errors only) | off
 MAX_RECORD_SECONDS=8            # toggle safety net, honoured as written
@@ -260,6 +261,13 @@ OLLAMA_HOST=http://localhost:11434   # provider=ollama only
 NVIDIA_SERVER=                  # self-hosted NIM host:port; empty = NVIDIA cloud
 NVIDIA_FUNCTION_ID=             # required by the NVIDIA cloud endpoint
 ```
+
+`PASTE_COMBO` is the key sequence injected at the focused window after a
+successful transcription (`ctrl+v` by dataclass default). **Terminals do not
+paste with `Ctrl+V`** — konsole, readline apps, and modern TUIs bind it to
+literal-insert — so on terminal-heavy setups keep `PASTE_COMBO=ctrl+shift+v`
+(the shipped default in installed configs). GUI apps accept both. See
+`docs/OPERATIONS.md` §3.5 for the full injection story.
 
 ### Choosing the key
 
@@ -283,7 +291,11 @@ On success with auto-paste, the notification is **closed** rather than repeating
 
 ## Troubleshooting
 
-**Start here.** Whispy logs every step of every dictation:
+**Start here.** The definitive operations runbook — every failure mode seen on
+the reference Arch/KDE system, with exact fixes — lives in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md). Read it before filing a bug.
+
+Whispy logs every step of every dictation:
 
 ```bash
 tail -f /tmp/whispy.log
@@ -327,13 +339,32 @@ journalctl --user -u whispy-ptt -n 30
 
 ### It transcribes but doesn't paste
 
-`ydotoold` must be running:
+**Terminal gotcha first:** in Konsole / tmux / readline apps (and in this
+setup, opencode, jcode and Claude Code) `Ctrl+V` is *literal-insert*, not
+paste. The text is already in your clipboard, but it won't land at the
+cursor unless the paste combo is the terminal one. The config key is
+`PASTE_COMBO` — set it to `ctrl+shift+v` (default in shipped configs) and
+restart `whispy-ptt`:
 
 ```bash
-systemctl --user enable --now ydotoold
+echo 'PASTE_COMBO=ctrl+shift+v' >> ~/.config/whispy/whispy.conf
+systemctl --user restart whispy-ptt
 ```
 
-The text is in the clipboard either way — `Ctrl+V` always works. Set `AUTOPASTE=0` to disable injection entirely.
+Injection uses ydotool, which needs its **user** daemon (socket under
+`$XDG_RUNTIME_DIR`):
+
+```bash
+systemctl --user enable --now ydotoold     # user daemon, vdev under /dev/input
+systemctl --user status ydotoold
+```
+
+The text is in the clipboard either way — paste manually if injection fails.
+Set `AUTOPASTE=0` to disable injection entirely.
+
+> Note: a *system* `ydotoold.service` (root, `/tmp/.ydotool_socket`) is not
+> the one Whispy talks to and is best kept disabled — see
+> `docs/OPERATIONS.md` §3.5.
 
 ### "No text" or wrong transcriptions
 

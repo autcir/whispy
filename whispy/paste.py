@@ -60,19 +60,24 @@ def _ydotool_key(*events: str) -> bool:
     if not shutil.which("ydotool"):
         return False
     _ensure_ydotool_socket()
-    subprocess.run(["ydotool", "key", *events], check=False)
-    return True
+    r = subprocess.run(["ydotool", "key", *events], check=False)
+    return r.returncode == 0
 
 
 def _release_modifiers() -> None:
     _ydotool_key(*ydotool_release_modifiers_args())
 
 
-def _paste_ctrl_v() -> bool:
+def _paste_ctrl_v(shift: bool = False) -> bool:
     time.sleep(0.15)
     _release_modifiers()
     time.sleep(0.05)
-    ok = _ydotool_key(*ydotool_ctrl_v_args())
+    if shift:
+        ok = _ydotool_key(
+            f"{KEY_LEFTSHIFT}:1", *ydotool_ctrl_v_args(), f"{KEY_LEFTSHIFT}:0"
+        )
+    else:
+        ok = _ydotool_key(*ydotool_ctrl_v_args())
     _release_modifiers()
     return ok
 
@@ -104,17 +109,34 @@ def copy_to_clipboard(text: str) -> bool:
     return False
 
 
-def inject_paste() -> bool:
-    """Simulate Ctrl+V (clipboard already filled). Does not touch the clipboard content."""
-    if shutil.which("ydotool") and _paste_ctrl_v():
+def inject_paste(paste_combo: str = "ctrl+v") -> bool:
+    """Simulate Ctrl+V / Ctrl+Shift+V (clipboard already filled).
+
+    Su questo KWin 6 il compositor NON espone il protocollo virtual-keyboard
+    (wtype fallisce con 'Compositor does not support...'), quindi l'unica via di
+    iniezione è ydotool via uinput. wtype resta come fallback per altri sistemi.
+
+    Nei terminali (Konsole/opencode/jcode/claude code) Ctrl+V è il literal-insert
+    di readline e non incolla: lì serve ctrl+shift+v.
+    """
+    shift = "shift" in paste_combo.lower()
+    if shutil.which("ydotool") and _paste_ctrl_v(shift=shift):
         return True
     if shutil.which("wtype"):
-        r = subprocess.run(["wtype", "-M", "ctrl", "v", "-m", "ctrl"], check=False)
+        keys = ["wtype", "-M", "ctrl"]
+        if shift:
+            keys.extend(["-M", "shift"])
+        keys += ["v", "-m"]
+        if shift:
+            keys.append("shift")
+        keys.append("ctrl")
+        r = subprocess.run(keys, check=False)
         if r.returncode == 0:
             return True
     if shutil.which("xdotool"):
+        combo = "ctrl+shift+v" if shift else "ctrl+v"
         subprocess.run(
-            ["xdotool", "key", "--clearmodifiers", "ctrl+v"],
+            ["xdotool", "key", "--clearmodifiers", combo],
             check=False,
         )
         return True

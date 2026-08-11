@@ -284,7 +284,7 @@ def _transcribe_and_paste(cfg: Config) -> int:
     injected = False
     if cfg.autopaste and copied:
         time.sleep(0.3)
-        injected = paste.inject_paste()
+        injected = paste.inject_paste(paste_combo=cfg.paste_combo)
     if not cfg.autopaste:
         print(text)
 
