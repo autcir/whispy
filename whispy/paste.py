@@ -73,9 +73,7 @@ def _paste_ctrl_v(shift: bool = False) -> bool:
     _release_modifiers()
     time.sleep(0.05)
     if shift:
-        ok = _ydotool_key(
-            f"{KEY_LEFTSHIFT}:1", *ydotool_ctrl_v_args(), f"{KEY_LEFTSHIFT}:0"
-        )
+        ok = _ydotool_key(f"{KEY_LEFTSHIFT}:1", *ydotool_ctrl_v_args(), f"{KEY_LEFTSHIFT}:0")
     else:
         ok = _ydotool_key(*ydotool_ctrl_v_args())
     _release_modifiers()
