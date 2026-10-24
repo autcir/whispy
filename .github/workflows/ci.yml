@@ -18,7 +18,7 @@ concurrency:
 jobs:
   test:
     name: Pytest & Ruff
-    runs-on: [self-hosted, soliso, whispy]
+    runs-on: [self-hosted, soliso, autcir, whispy]
     timeout-minutes: 15
 
     steps:
